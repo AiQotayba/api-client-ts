@@ -1,6 +1,6 @@
 {
   "name": "api-client-ts",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "TypeScript HTTP API client for browser apps (fetch, auth, timeouts)",
   "license": "MIT",
   "author": "@AiQotayba",
@@ -49,20 +49,14 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "prepublishOnly": "pnpm run build",
     "publish:npm": "pnpm publish --access public --no-git-checks",
-    "bump": "bumpp",
-    "version:patch": "bumpp patch",
-    "version:minor": "bumpp minor",
-    "version:major": "bumpp major",
-    "release": "bumpp && pnpm run publish:npm",
-    "release:patch": "bumpp patch && pnpm run publish:npm",
-    "release:minor": "bumpp minor && pnpm run publish:npm",
-    "release:major": "bumpp major && pnpm run publish:npm"
-  },
-  "bumpp": {
-    "commit": true,
-    "tag": true,
-    "push": false,
-    "sign": false,
-    "confirm": true
+    "bump": "bumpp -y",
+    "version:patch": "bumpp patch -y",
+    "version:minor": "bumpp minor -y",
+    "version:major": "bumpp major -y",
+    "release": "bumpp -y && pnpm run publish:npm",
+    "release:patch": "bumpp patch -y && pnpm run publish:npm",
+    "release:minor": "bumpp minor -y && pnpm run publish:npm",
+    "release:major": "bumpp major -y && pnpm run publish:npm",
+    "git:push": "git push -u origin main --follow-tags"
   }
 }
