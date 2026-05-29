@@ -49,14 +49,14 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "prepublishOnly": "pnpm run build",
     "publish:npm": "pnpm publish --access public --no-git-checks",
-    "bump": "bumpp -y",
-    "version:patch": "bumpp patch -y",
-    "version:minor": "bumpp minor -y",
-    "version:major": "bumpp major -y",
-    "release": "bumpp -y && pnpm run publish:npm",
-    "release:patch": "bumpp patch -y && pnpm run publish:npm",
-    "release:minor": "bumpp minor -y && pnpm run publish:npm",
-    "release:major": "bumpp major -y && pnpm run publish:npm",
+    "bump": "node scripts/bump.mjs",
+    "version:patch": "node scripts/bump.mjs patch",
+    "version:minor": "node scripts/bump.mjs minor",
+    "version:major": "node scripts/bump.mjs major",
+    "release": "node scripts/bump.mjs && pnpm run publish:npm",
+    "release:patch": "node scripts/bump.mjs patch && pnpm run publish:npm",
+    "release:minor": "node scripts/bump.mjs minor && pnpm run publish:npm",
+    "release:major": "node scripts/bump.mjs major && pnpm run publish:npm",
     "git:push": "git push -u origin main --follow-tags"
   }
 }
