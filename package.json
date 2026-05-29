@@ -1,6 +1,6 @@
 {
   "name": "api-client-ts",
-  "version": "1.1.3",
+  "version": "1.1.4",
   "description": "TypeScript HTTP API client for browser apps (fetch, auth, timeouts)",
   "license": "MIT",
   "author": "@AiQotayba",
@@ -53,15 +53,15 @@
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "prepublishOnly": "pnpm run build",
-    "publish:npm": "pnpm run bump; pnpm publish --access public --no-git-checks",
+    "publish:npm": "pnpm run bump && pnpm publish --access public --no-git-checks",
     "bump": "node scripts/bump.mjs",
     "version:patch": "node scripts/bump.mjs patch",
     "version:minor": "node scripts/bump.mjs minor",
     "version:major": "node scripts/bump.mjs major",
-    "release": "node scripts/bump.mjs && pnpm run publish:npm",
-    "release:patch": "node scripts/bump.mjs patch && pnpm run publish:npm",
-    "release:minor": "node scripts/bump.mjs minor && pnpm run publish:npm",
-    "release:major": "node scripts/bump.mjs major && pnpm run publish:npm",
+    "release": "pnpm run publish:npm",
+    "release:patch": "node scripts/bump.mjs patch && pnpm publish --access public --no-git-checks",
+    "release:minor": "node scripts/bump.mjs minor && pnpm publish --access public --no-git-checks",
+    "release:major": "node scripts/bump.mjs major && pnpm publish --access public --no-git-checks",
     "git:push": "git push -u origin main --follow-tags"
   }
 }
