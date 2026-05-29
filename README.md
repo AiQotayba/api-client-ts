@@ -1,22 +1,23 @@
-# @qotayba/api-client-ts
+# api-client-ts
 
 TypeScript HTTP client for browser apps: configurable `fetch` wrapper with auth headers, timeouts, uploads, and optional toasts.
 
 ## Install
 
 ```bash
-npm install @qotayba/api-client-ts
+npm install api-client-ts
 ```
 
 ## Usage
 
 ```ts
-import { createApi, createFetchApi } from "@qotayba/api-client-ts";
+import { createApi, createFetchApi } from "api-client-ts";
 
 const api = createApi({
   baseUrl: "https://api.example.com/v1",
   getToken: () => localStorage.getItem("token"),
-  getCsrfToken: () => document.querySelector('meta[name="csrf-token"]')?.getAttribute("content"),
+  getCsrfToken: () =>
+    document.querySelector('meta[name="csrf-token"]')?.getAttribute("content"),
   getLang: () => "ar",
   credentials: "include",
   retry: 2,
@@ -33,14 +34,6 @@ const { data, isError } = await api.get<User[]>("/users", {
 
 const fetchApi = createFetchApi("https://api.example.com/v1");
 const res = await fetchApi<User[]>("/users", { token: "..." });
-```
-
-## Publish (maintainers)
-
-```bash
-npm logout
-npm login
-pnpm publish --access public --no-git-checks --otp=YOUR_6_DIGIT_CODE
 ```
 
 ## License
