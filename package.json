@@ -1,6 +1,6 @@
 {
   "name": "api-client-ts",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "description": "TypeScript HTTP API client for browser apps (fetch, auth, timeouts)",
   "license": "MIT",
   "author": "@AiQotayba",
