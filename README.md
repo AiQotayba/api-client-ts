@@ -1,41 +1,118 @@
 # api-client-ts
 
-TypeScript HTTP client for browser apps: configurable `fetch` wrapper with auth headers, timeouts, uploads, and optional toasts.
+A modern, lightweight HTTP client built on top of the Fetch API.
 
-## Install
+`api-client-ts` keeps the native Fetch experience while removing the repetitive code every application eventually needs—authentication, retries, request deduplication, timeouts, validation, uploads, and consistent error handling.
 
-```bash
-npm install api-client-ts
-```
+Unlike Axios, it doesn't replace Fetch—it enhances it.
 
-## Usage
+## Why api-client-ts?
+
+Every project starts with something like this:
 
 ```ts
-import { createApi, createFetchApi } from "api-client-ts";
+const token = localStorage.getItem("token");
 
-const api = createApi({
-  baseUrl: "https://api.example.com/v1",
-  getToken: () => localStorage.getItem("token"),
-  getCsrfToken: () =>
-    document.querySelector('meta[name="csrf-token"]')?.getAttribute("content"),
-  getLang: () => "ar",
-  credentials: "include",
-  retry: 2,
-});
-
-const { data, isError } = await api.get<User[]>("/users", {
-  dedupe: true,
-  signal: abortController.signal,
-  validate: (raw) => {
-    if (!Array.isArray(raw)) throw new Error("Invalid shape");
-    return raw;
+const response = await fetch("/users?page=1", {
+  method: "GET",
+  headers: {
+    Authorization: `Bearer ${token}`,
+    "Accept-Language": "en",
+    "Content-Type": "application/json",
   },
 });
 
-const fetchApi = createFetchApi("https://api.example.com/v1");
-const res = await fetchApi<User[]>("/users", { token: "..." });
+if (!response.ok) {
+  throw new Error("Request failed");
+}
+
+const users = await response.json();
 ```
 
-## License
+Then your project grows...
 
-MIT
+- Authentication
+- CSRF
+- Timeouts
+- Retries
+- AbortController
+- Error parsing
+- Toast notifications
+- Query parameters
+- File uploads
+- Validation
+- Duplicate request prevention
+
+Soon every request looks different.
+
+`api-client-ts` centralizes all of that into one reusable client.
+
+```ts
+const { data } = await api.get<User[]>("/users", {
+    params: { page: 1 },
+});
+```
+
+No repeated headers.
+
+No repeated fetch configuration.
+
+No repeated error handling.
+
+Just your business logic.
+
+---
+
+# Features
+
+✅ Built on the native Fetch API
+
+✅ Fully typed with TypeScript
+
+✅ Authentication (Bearer / CSRF)
+
+✅ Automatic retries
+
+✅ Request timeout
+
+✅ Request deduplication
+
+✅ Runtime validation
+
+✅ File uploads
+
+✅ Global error handling
+
+✅ Optional toast notifications
+
+✅ AbortController support
+
+✅ Small bundle size
+
+---
+
+# Why not Axios?
+
+| Feature | Fetch | Axios | api-client-ts |
+|---------|------|-------|---------------|
+| Native Fetch | ✅ | ❌ | ✅ |
+| TypeScript-first | ⚠️ | ✅ | ✅ |
+| Authentication helpers | ❌ | ⚠️ | ✅ |
+| Retry | ❌ | Plugin | ✅ |
+| Request deduplication | ❌ | ❌ | ✅ |
+| Runtime validation | ❌ | ❌ | ✅ |
+| Toast integration | ❌ | ❌ | ✅ |
+| File uploads | ⚠️ | ✅ | ✅ |
+| Zero dependencies | ✅ | ❌ | ✅ |
+
+---
+
+# Philosophy
+
+Instead of replacing Fetch with another HTTP library, `api-client-ts` embraces the Web Platform.
+
+You keep the browser's native API while gaining the developer experience expected from modern applications.
+
+Think of it as:
+
+> **Fetch++, not Fetch replacement.**

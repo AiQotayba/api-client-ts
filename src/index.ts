@@ -15,6 +15,7 @@ export interface ApiResponse<T = unknown> {
   isError: boolean;
   data: T;
   message?: string;
+  errors?: Record<string, string[]>;
   status?: number;
   meta?: {
     current_page: number;
@@ -64,6 +65,14 @@ export interface ApiConfig {
   retry?: number;
   retryDelay?: number;
   exposeErrorDetails?: boolean;
+  messages?: {
+    genericError?: string;
+    unexpectedError?: string;
+    unauthorizedError?: string;
+    invalidResponseFormat?: string;
+    requestTimeout?: string;
+    failedToParseResponse?: string;
+  };
 }
 
 export interface UploadImageOptions {
@@ -107,8 +116,7 @@ export interface ApiInstance {
   ) => Promise<ApiResponse<T>>;
 }
 
-const GENERIC_ERROR_MESSAGE = "حدث خطأ أثناء تنفيذ الطلب";
-const UNEXPECTED_ERROR_MESSAGE = "حدث خطأ غير متوقع";
+
 
 class ApiCore implements ApiInstance {
   private config: ApiConfig;
@@ -264,7 +272,7 @@ class ApiCore implements ApiInstance {
           return {
             isError: true,
             data: undefined as T,
-            message: this.userFacingMessage("Invalid response format", requestOptions),
+            message: this.userFacingMessage(this.config.messages?.invalidResponseFormat || "Invalid response format", requestOptions),
             status: response.status,
           };
         }
@@ -277,7 +285,7 @@ class ApiCore implements ApiInstance {
           isError: true,
           message:
             apiResponse.message ||
-            this.userFacingMessage("تم تسجيل الخروج - انتهت صلاحية الجلسة", requestOptions),
+            this.userFacingMessage(this.config.messages?.unauthorizedError || "Session expired - please login again", requestOptions),
         } as ApiResponse<T>;
       }
 
@@ -391,10 +399,21 @@ class ApiCore implements ApiInstance {
         };
       }
 
-      const payload =
-        typeof raw === "object" && raw !== null && !Array.isArray(raw)
-          ? (raw as Record<string, unknown>)
-          : { data: raw };
+      let payload: Record<string, unknown> = {};
+      if (typeof raw === "object" && raw !== null && !Array.isArray(raw)) {
+        const rawObj = raw as Record<string, unknown>;
+        if ('data' in rawObj) {
+          payload = rawObj;
+        } else {
+          payload = {
+            data: rawObj,
+            ...(rawObj.message ? { message: rawObj.message } : {}),
+            ...(rawObj.errors ? { errors: rawObj.errors } : {})
+          };
+        }
+      } else {
+        payload = { data: raw };
+      }
 
       const message =
         typeof payload.message === "string"
@@ -411,7 +430,7 @@ class ApiCore implements ApiInstance {
       return {
         isError,
         data: undefined as T,
-        message: "Failed to parse response",
+        message: this.config.messages?.failedToParseResponse || "Failed to parse response",
         status: response.status,
       };
     }
@@ -437,7 +456,7 @@ class ApiCore implements ApiInstance {
 
     this.config.onError?.(error as Error);
 
-    const errorObj = error as { status?: number };
+    const errorObj = error as { status?: number, errors?: Record<string, string[]> };
     if (errorObj.status === 401 || errorObj.status === 403) {
       this.config.onUnauthorized?.();
       return {
@@ -445,16 +464,27 @@ class ApiCore implements ApiInstance {
         data: undefined,
         message:
           errorMessage ||
-          this.userFacingMessage("تم تسجيل الخروج - انتهت صلاحية الجلسة", options),
+          this.userFacingMessage(this.config.messages?.unauthorizedError || "Session expired - please login again", options),
+        errors: errorObj.errors,
         status: errorObj.status || 401,
       };
     }
 
     if (options?.showErrorToast !== false && this.config.showToast) {
-      const message = options?.errorMessage
-        ? sanitizeDisplayMessage(options.errorMessage)
-        : errorMessage;
-      this.config.showToast(message, "error");
+      if (errorObj.errors && typeof errorObj.errors === "object" && Object.keys(errorObj.errors).length > 0) {
+        Object.values(errorObj.errors).forEach(errArray => {
+          if (Array.isArray(errArray)) {
+            errArray.forEach(errStr => this.config.showToast!(sanitizeDisplayMessage(errStr), "error"));
+          } else if (typeof errArray === "string") {
+            this.config.showToast!(sanitizeDisplayMessage(errArray as string), "error");
+          }
+        });
+      } else {
+        const message = options?.errorMessage
+          ? sanitizeDisplayMessage(options.errorMessage)
+          : errorMessage;
+        this.config.showToast(message, "error");
+      }
     } else if (options?.msgs && this.config.showToast) {
       this.config.showToast(errorMessage, "error");
     }
@@ -463,6 +493,7 @@ class ApiCore implements ApiInstance {
       isError: true,
       data: undefined,
       message: errorMessage,
+      errors: errorObj.errors,
       status: errorObj.status || 500,
     };
   }
@@ -484,20 +515,34 @@ class ApiCore implements ApiInstance {
     if (this.shouldExposeErrorDetails()) {
       return sanitizeDisplayMessage(detailed);
     }
-    return GENERIC_ERROR_MESSAGE;
+    return this.config.messages?.genericError || "An error occurred during the request";
   }
 
   private getErrorMessage(error: unknown, options?: ApiOptions): string {
-    const err = error as { name?: string; message?: string };
+    const err = error as { name?: string; message?: string; errors?: Record<string, string[]> };
 
     if (err.name === "AbortError") {
-      return this.userFacingMessage("Request timeout", options);
+      return this.userFacingMessage(this.config.messages?.requestTimeout || "Request timeout", options);
     }
 
-    const detailed =
+    let detailed =
       err.message ||
       (typeof error === "string" ? error : "") ||
-      UNEXPECTED_ERROR_MESSAGE;
+      (this.config.messages?.unexpectedError || "An unexpected error occurred");
+
+    if (err.errors && typeof err.errors === "object") {
+      const allErrors: string[] = [];
+      Object.values(err.errors).forEach(errArray => {
+        if (Array.isArray(errArray)) {
+          allErrors.push(...errArray);
+        } else if (typeof errArray === "string") {
+          allErrors.push(errArray as string);
+        }
+      });
+      if (allErrors.length > 0) {
+        detailed = allErrors.join("\n");
+      }
+    }
 
     return this.userFacingMessage(detailed, options);
   }
